@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      font-size: 12px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #111;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .toolbar h1 {
+      font-size: 14px;
+      color: #00ff88;
+      margin-right: 12px;
+    }
+    button {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { border-color: #00ff88; color: #00ff88; }
+    button.active { background: #00ff88; color: #0a0a0a; border-color: #00ff88; }
+    button.danger { border-color: #ff4444; color: #ff4444; }
+    button.danger:hover { background: #ff4444; color: #0a0a0a; }
+    .count {
+      margin-left: auto;
+      color: #666;
+      font-size: 11px;
+    }
+    .count span { color: #00ff88; }
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #0e0e0e;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .filter-bar input {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 11px;
+    }
+    .filter-bar input:focus { outline: none; border-color: #00ff88; }
+    .filter-bar input::placeholder { color: #555; }
+    .filter-bar select {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 4px 6px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 11px;
+    }
+    .filter-bar select:focus { outline: none; border-color: #00ff88; }
+    .content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .request-list {
+      width: 380px;
+      overflow-y: auto;
+      border-right: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .request-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #1a1a1a;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .request-item:hover { background: #151515; }
+    .request-item.skipped-ai { opacity: 0.5; }
+    .request-item.selected { background: #1a2a1a; border-left: 2px solid #00ff88; }
+    .request-item .method {
+      font-weight: 700;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      display: inline-block;
+      width: fit-content;
+    }
+    .method-GET { color: #4fc3f7; }
+    .method-POST { color: #00ff88; }
+    .method-PUT { color: #ffb74d; }
+    .method-PATCH { color: #ce93d8; }
+    .method-DELETE { color: #ff4444; }
+    .request-item .url {
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+    .request-item .meta {
+      display: flex;
+      gap: 8px;
+      font-size: 10px;
+      color: #555;
+    }
+    .request-item .status-ok { color: #00ff88; }
+    .request-item .status-err { color: #ff4444; }
+    .request-item .status-redirect { color: #ffb74d; }
+    .request-item .ai-badge {
+      font-size: 9px;
+      color: #9c27b0;
+      margin-left: auto;
+    }
+    .dup-count {
+      color: #ff9800;
+      font-weight: 700;
+      font-size: 10px;
+      margin-left: auto;
+    }
+    .detail-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .detail-panel .empty {
+      color: #444;
+      text-align: center;
+      margin-top: 40px;
+    }
+    .detail-section {
+      margin-bottom: 16px;
+    }
+    .detail-section h3 {
+      color: #00ff88;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #222;
+    }
+    .detail-section pre {
+      background: #111;
+      padding: 8px;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 11px;
+      line-height: 1.5;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .ai-summary {
+      background: #1a1028;
+      border: 1px solid #2a1a3a;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .ai-summary h3 { color: #9c27b0; border-bottom-color: #2a1a3a; }
+    .ai-summary .text { color: #ce93d8; }
+    .opus-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    .opus-overlay.visible { display: block; }
+    .opus-overlay h2 { color: #ff6f00; margin-bottom: 16px; }
+    .opus-overlay .close-btn {
+      position: fixed;
+      top: 12px;
+      right: 20px;
+      font-size: 18px;
+      cursor: pointer;
+      color: #888;
+    }
+    .opus-overlay .close-btn:hover { color: #fff; }
+    .opus-result {
+      background: #1a1200;
+      border: 1px solid #332a00;
+      padding: 16px;
+      border-radius: 8px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      color: #ffcc80;
+    }
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #333;
+      border-top-color: #00ff88;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1>NetJunkie</h1>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" class="danger" disabled>Stop & Analyze</button>
+    <button id="clearBtn">Clear</button>
+    <button id="exportBtn">Export JSON</button>
+    <div class="count"><span id="reqCount">0</span> requests captured</div>
+  </div>
+  <div class="filter-bar">
+    <input type="text" id="filterInput" placeholder="Filter by URL, status, or summary...">
+    <select id="methodFilter">
+      <option value="ALL">All Methods</option>
+      <option value="GET">GET</option>
+      <option value="POST">POST</option>
+      <option value="PUT">PUT</option>
+      <option value="PATCH">PATCH</option>
+      <option value="DELETE">DELETE</option>
+      <option value="OPTIONS">OPTIONS</option>
+      <option value="HEAD">HEAD</option>
+    </select>
+  </div>
+  <div class="content">
+    <div class="request-list" id="requestList"></div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="empty">Start monitoring to capture network requests.</div>
+    </div>
+  </div>
+  <div class="opus-overlay" id="opusOverlay">
+    <span class="close-btn" id="closeOpus">&times;</span>
+    <h2>High-Value Action Analysis (Claude Opus)</h2>
+    <div class="opus-result" id="opusResult">Analyzing...</div>
+  </div>
+  <script src="capture.js"></script>
+  <script src="api.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>

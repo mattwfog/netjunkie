@@ -1,0 +1,21 @@
+proxy/node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+proxy/.env
+proxy/.env.*
+!proxy/.env.example
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
